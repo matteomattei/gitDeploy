@@ -1,0 +1,32 @@
+{
+  "name": "gitdeploy",
+  "version": "1.0.0",
+  "description": "A simple nodejs application to deploy git repositories using hooks",
+  "main": "app.js",
+  "dependencies": {
+    "body-parser": "^1.14.1",
+    "express": "^4.13.3",
+    "fs": "0.0.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/matteomattei/gitdeploy.git"
+  },
+  "keywords": [
+    "git",
+    "deployment",
+    "hooks",
+    "nodejs",
+    "repository"
+  ],
+  "author": "Matteo Mattei",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/matteomattei/gitdeploy/issues"
+  },
+  "homepage": "https://github.com/matteomattei/gitdeploy#readme"
+}
