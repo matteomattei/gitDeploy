@@ -50,3 +50,66 @@ su root -c "pm2 dump && pm2 kill" && su root -c "systemctl daemon-reload && syst
 ```
 
 From now on, even if the server restarts, pm2 will be always re-launched.
+
+Configure NGINX
+===============
+
+In your NGINX virtualhost configuration add a new location to listen for POST requests and pass them to nodejs application that runs on port 8888:
+
+```
+server {
+    listen 80;
+    server_name  www.example.com;
+    access_log   /var/www/www.example.com/logs/nginx.access.log;
+    error_log    /var/www/www.example.com/logs/nginx.error.log;
+    root /var/www/www.example.com/public_html;
+    index index.html;
+
+    # gitDeploy
+    location ~ "/sync/(.*)$" {
+        proxy_pass http://127.0.0.1:8888/$1;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # static website
+    location / {
+        try_files $uri $uri/ $uri.html =404;
+        expires 7d;
+    }
+}
+```
+
+Every request to /sync/<something> will be processed by the nodejs instance of gitDeploy.
+
+Configure gitDeploy
+===================
+
+Edit config.js to add a new git repository to sync in the hosts array:
+
+```
+var hosts = [
+    {
+        'name':'www.example.com', // domain name
+        'route':'7d2a5d619bae1e7ce5bd44ecbc67a0fbc1b74a5745eff3a575ae22ae4a5cb0d1', // random generated route name
+        'repository_url':'git@bitbucket.org:matteomattei/mytestrepo.git', // git repository (make sure it ends with .git)
+        'destination': '/var/www/www.example.com/public_html', // destination folder on the server
+        'branch': 'master', // git branch
+        'user': 'user1' // user on the server that the files should belong to
+    },
+    {
+        'name':'api.example.com',
+        'route':'5691017598b8f0eff189e456b116529d13384171c109d6737f0d878c1199ef0c',
+        'repository_url':'git@bitbucket.org:matteomattei/myapirepo.git',
+        'destination': '/var/www/api.example.com/public_html',
+        'branch': 'master',
+        'user': 'user2'
+    },
+];
+```
+
+The route name should be a long sequence of letters and numbers (for example something like ```7d2a5d619bae1e7ce5bd44ecbc67a0fbc1b74a5745eff3a575ae22ae4a5cb0d1```) that only you and the GIT server should know.
