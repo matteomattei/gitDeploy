@@ -26,6 +26,9 @@ var gitupdate = function(data, callback){
     command+= 'cd '+base_dir+'/repos/'+repo_name+' && ';
     command+= '/usr/bin/git fetch && ';
     command+= 'GIT_WORK_TREE='+data.destination+' /usr/bin/git checkout -f && ';
+    if(data.postcmd){
+        command+= 'cd '+data.destination+' && '+data.postcmd+' && ';
+    }
     command+= '/bin/chown '+data.user+'.'+data.user+' -R '+data.destination;
     //console.log(command);
     proc.exec(command,function(error,stdout,stderr){

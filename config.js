@@ -5,7 +5,8 @@ var hosts = [
         'repository_url':'git@bitbucket.org:matteomattei/myrepository.git',
         'destination': '/var/www/www.example.com/public_html',
         'branch': 'master',
-        'user': 'user1'
+        'user': 'user1',
+        'postcmd': 'npm install'
     },
     {
         'name':'api.example.com',

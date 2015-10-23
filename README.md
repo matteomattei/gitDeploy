@@ -99,7 +99,8 @@ var hosts = [
         'repository_url':'git@bitbucket.org:matteomattei/mytestrepo.git', // git repository (make sure it ends with .git)
         'destination': '/var/www/www.example.com/public_html', // destination folder on the server
         'branch': 'master', // git branch
-        'user': 'user1' // user on the server that the files should belong to
+        'user': 'user1', // user on the server that the files should belong to
+        'postcmd': 'npm install' // command to execute after sync (optional)
     },
     {
         'name':'api.example.com',
