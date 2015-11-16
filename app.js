@@ -2,6 +2,7 @@ var fs = require('fs');
 var proc = require('child_process');
 var express = require('express');
 var bodyParser = require('body-parser');
+var path = require('path');
 var app = express();
 var base_dir = __dirname;
 var hosts = require('./config')
@@ -15,21 +16,21 @@ var gitupdate = function(data, callback){
     if(!fs.existsSync(data.destination)){
         fs.mkdirSync(data.destination);
     }
-    if(!fs.existsSync(base_dir+'/repos/'+repo_name)){
+    if(!fs.existsSync(path.join(data.bare_repo,repo_name))){
         // bare mirroring of the repository
-        command = 'cd '+base_dir+'/repos && ';
+        command+= 'mkdir -p '+data.bare_repo+' && cd '+data.bare_repo+' && ';
         command+= '/usr/bin/git clone --mirror '+data.repository_url+' && ';
         command+= '/bin/mv '+data.repository_url.split('/').pop()+' '+repo_name+' && ';
         command+= 'cd '+repo_name+' && ';
         command+= 'GIT_WORK_TREE='+data.destination+' /usr/bin/git checkout -f '+data.branch+' && ';
     }
-    command+= 'cd '+base_dir+'/repos/'+repo_name+' && ';
+    command+= 'cd '+path.join(data.bare_repo,repo_name)+' && ';
     command+= '/usr/bin/git fetch && ';
-    command+= 'GIT_WORK_TREE='+data.destination+' /usr/bin/git checkout -f && ';
+    command+= 'GIT_WORK_TREE='+data.destination+' /usr/bin/git checkout -f';
     if(data.postcmd){
-        command+= 'cd '+data.destination+' && '+data.postcmd+' && ';
+        command+= ' && cd '+data.destination+' && '+data.postcmd;
     }
-    command+= '/bin/chown '+data.user+'.'+data.user+' -R '+data.destination;
+    command = 'su - '+data.user+' -c "'+command+'"';
     //console.log(command);
     proc.exec(command,function(error,stdout,stderr){
         if (error === null) {
