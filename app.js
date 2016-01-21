@@ -11,30 +11,24 @@ app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
 var gitupdate = function(data, callback){
-    var command = '';
-    var repo_name = data.branch+'__'+data.repository_url.split('/').pop();
-    if(!fs.existsSync(data.destination)){
-        fs.mkdirSync(data.destination);
-    }
-    if(!fs.existsSync(path.join(data.bare_repo,repo_name))){
-        // bare mirroring of the repository
-        command+= 'mkdir -p '+data.bare_repo+' && cd '+data.bare_repo+' && ';
-        command+= '/usr/bin/git clone --mirror '+data.repository_url+' && ';
-        command+= '/bin/mv '+data.repository_url.split('/').pop()+' '+repo_name+' && ';
-        command+= 'cd '+repo_name+' && ';
-        command+= 'GIT_WORK_TREE='+data.destination+' /usr/bin/git checkout -f '+data.branch+' && ';
-    }
-    command+= 'cd '+path.join(data.bare_repo,repo_name)+' && ';
-    command+= '/usr/bin/git fetch && ';
-    command+= 'GIT_WORK_TREE='+data.destination+' /usr/bin/git checkout -f';
-    if(data.postcmd){
-        command+= ' && cd '+data.destination+' && '+data.postcmd;
-    }
-    var timeout = (typeof data.timeout !== 'undefined') ? data.timeout : '600'; // 10 minutes
-    command = '( flock -x -w '+timeout+' 200 || exit 1; su - '+data.user+' -c "'+command+'"; ) 200>/tmp/gitDeploy.lock';
-    console.log(command);
-    proc.exec(command,function(error,stdout,stderr){
+    var timeout = (typeof data.timeout !== 'undefined') ? data.timeout : '600'; // default 10 minutes
+    var postcmd = (typeof data.postcmd !== 'undefined') ? data.postcmd : ''; // optional
+
+    var script = path.join(__dirname,'update.sh');
+    var params = [];
+    params.push('-r',data.branch+'__'+data.repository_url.split('/').pop());
+    params.push('-b',data.bare_repo);
+    params.push('-u',data.repository_url);
+    params.push('-a',data.repository_url.split('/').pop());
+    params.push('-n',data.branch);
+    params.push('-w',path.join(data.bare_repo,data.branch+'__'+data.repository_url.split('/').pop()));
+    params.push('-d',data.destination);
+    params.push('-t',timeout);
+    params.push('-i',data.user);
+    params.push('-c',"'"+postcmd+"'");
+    proc.execFile(script, params, function(error,stdout,stderr){
         if (error === null) {
+            console.log(stdout,stderr);
             callback(true);
         } else {
             console.log(error,stdout,stderr);
@@ -45,11 +39,8 @@ var gitupdate = function(data, callback){
 
 var update = function(req,data,callback){
     console.log('======================================');
-    console.log('data=',data);
-    console.log('body=',req.body);
     var toupdate = false;
     var changes = (typeof req.body.push.changes !== 'undefined') ? req.body.push.changes : false;
-    console.log('changes=',changes);
     if(changes){
         for(var i=0; i<changes.length; i++){
             if(changes[i].new.name == data.branch){
@@ -74,14 +65,13 @@ for(var i=0;i<hosts.length;i++){
     var domain_data = hosts[i];
     (function(domain_data){
         app.post('/'+domain_data.route, function (req, res) {
+            res.status(200).send('OK, task scheduled');
             console.log('Processing '+domain_data.name);
             update(req, domain_data ,function(result){
                 if(result){
                     console.log('sync done');
-                    res.sendStatus(200);
                 } else {
                     console.log('sync failed');
-                    res.sendStatus(500);
                 }
             });
         });

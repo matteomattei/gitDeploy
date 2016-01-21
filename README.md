@@ -44,7 +44,7 @@ Start daemon
 Login to the server that will host the git repositories and then:
 
 ```
-pm2 start --watch --ignore-watch=repos app.js
+pm2 start --watch app.js
 pm2 startup systemd
 su root -c "pm2 dump && pm2 kill" && su root -c "systemctl daemon-reload && systemctl enable pm2 && systemctl start pm2"
 ```
@@ -100,6 +100,7 @@ var hosts = [
         'destination': '/var/www/www.example.com/public_html', // destination folder on the server
         'branch': 'master', // git branch
         'user': 'user1', // user on the server that the files should belong to
+        'timeout': '600', // seconds to wait before giving up
         'postcmd': 'npm install' // command to execute after sync (optional)
     },
     {
@@ -108,7 +109,8 @@ var hosts = [
         'repository_url':'git@bitbucket.org:matteomattei/myapirepo.git',
         'destination': '/var/www/api.example.com/public_html',
         'branch': 'master',
-        'user': 'user2'
+        'user': 'user2',
+        'timeout': '300', // seconds to wait before giving up
     },
 ];
 ```
