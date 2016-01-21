@@ -30,7 +30,8 @@ var gitupdate = function(data, callback){
     if(data.postcmd){
         command+= ' && cd '+data.destination+' && '+data.postcmd;
     }
-    command = 'su - '+data.user+' -c "'+command+'"';
+    var timeout = (typeof data.timeout !== 'undefined') ? data.timeout : '600'; // 10 minutes
+    command = '( flock -x -w '+timeout+' 200 || exit 1; su - '+data.user+' -c "'+command+'"; ) 200>/tmp/gitDeploy.lock';
     //console.log(command);
     proc.exec(command,function(error,stdout,stderr){
         if (error === null) {
@@ -42,7 +43,9 @@ var gitupdate = function(data, callback){
 };
 
 var update = function(req,data,callback){
+    console.log('======================================');
     console.log('data=',data);
+    console.log('body=',req.body);
     var toupdate = false;
     var changes = req.body.push.changes || false;
     if(changes){

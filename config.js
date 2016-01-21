@@ -8,6 +8,7 @@ var hosts = [
         'branch': 'master',
         'user': 'user1',
         'postcmd': 'npm install'
+        'timeout': '600'
     },
     {
         'name':'api.example.com',
@@ -16,7 +17,8 @@ var hosts = [
         'bare_repo': '/var/www/api.example.com/bare_repo',
         'destination': '/var/www/api.example.com/public_html',
         'branch': 'master',
-        'user': 'user2'
+        'user': 'user2',
+        'timeout': '3600'
     },
 ];
 
