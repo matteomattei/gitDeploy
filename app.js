@@ -32,11 +32,12 @@ var gitupdate = function(data, callback){
     }
     var timeout = (typeof data.timeout !== 'undefined') ? data.timeout : '600'; // 10 minutes
     command = '( flock -x -w '+timeout+' 200 || exit 1; su - '+data.user+' -c "'+command+'"; ) 200>/tmp/gitDeploy.lock';
-    //console.log(command);
+    console.log(command);
     proc.exec(command,function(error,stdout,stderr){
         if (error === null) {
             callback(true);
         } else {
+            console.log(error,stdout,stderr);
             callback(false);
         }
     });
@@ -47,7 +48,8 @@ var update = function(req,data,callback){
     console.log('data=',data);
     console.log('body=',req.body);
     var toupdate = false;
-    var changes = req.body.push.changes || false;
+    var changes = (typeof req.body.push.changes !== 'undefined') ? req.body.push.changes : false;
+    console.log('changes=',changes);
     if(changes){
         for(var i=0; i<changes.length; i++){
             if(changes[i].new.name == data.branch){
@@ -58,6 +60,7 @@ var update = function(req,data,callback){
     }
     if(toupdate){
         gitupdate(data,function(result){
+            console.log('gitupdate result=',result);
             callback(result);
             return;
         });
